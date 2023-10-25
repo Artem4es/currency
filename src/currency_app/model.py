@@ -1,5 +1,5 @@
 from database import Base
-from sqlalchemy import String, Integer, Float, Column, DateTime, func
+from sqlalchemy import String, Integer, Float, Column, DateTime, func, Date, BigInteger
 
 
 class CurrencyDB(Base):
@@ -8,9 +8,12 @@ class CurrencyDB(Base):
     - code: str (RUB, USD etc)
     - rate: float (Rate to 1 EUR)
     - updated_at: auto field
+    updated_at Column(Date, nullable=True)         ### время будет со сдвигом скорее всего!!!
+    unix_timestamp = Column(DateTime, nullable=True)
     """
     __tablename__ = "currency"
-    name = Column(String, nullable=False)
-    code = Column(String, nullable=False)
+    code = Column(String, index=True, nullable=False, unique=True, primary_key=True)
+    name = Column(String, index=True, nullable=False)
     rate = Column(Float, nullable=True, default=None)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now())  ### время будет со сдвигом скорее всего!!!
+    updated_date = Column(Date, nullable=True)         ### время будет со сдвигом скорее всего!!!  МОЖЕТ ЛИШНЕЕ!!
+    updated_timestamp = Column(BigInteger, nullable=True)

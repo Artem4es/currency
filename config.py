@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     fastapi_debug: bool
     fastapi_name: str = "Currency app"
 
-    currency_name_url: str
+    api_key: str
     base_currency_url: str
     currency_api_version: str
     currency_names: str
     currency_rates: str
 
-    # model_config = SettingsConfigDict(env_file=env_file_path)
+    model_config = SettingsConfigDict(env_file=".env")

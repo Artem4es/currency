@@ -2,7 +2,8 @@ from typing import AsyncGenerator
 
 from httpx import AsyncClient
 
-from currency.config import Settings
+# from currency.config import Settings
+from config import Settings
 
 settings = Settings()
 
