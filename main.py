@@ -11,7 +11,7 @@ from config import Settings
 from database import get_async_session
 from src.currency_app.dependencies import get_async_client
 from src.currency_app.router import router as currency_router
-from src.currency_app.service import update_currency_table
+from src.currency_app.service import update_currency
 
 settings = Settings()
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):   # можно ли тут depends?
 
     async for client in get_async_client():
         async for db_session in get_async_session():
-            await update_currency_table(client, db_session)
+            await update_currency(client, db_session)
     # db_session = get_async_session()
 
     yield

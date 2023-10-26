@@ -3,7 +3,7 @@ from http import HTTPStatus
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from src.currency_app.crud import update_db_currency_names, update_db_currency_rates
+from src.currency_app.crud import update_db_currency_names, update_db_currency_rates, update_currency_dates
 from src.currency_app.schema import GetRates, GetCodes
 from config import Settings
 import logging
@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 settings = Settings()
 
 
-async def update_currency_table(client: AsyncClient, db_session: AsyncSession) -> None:
+async def update_currency(client: AsyncClient, db_session: AsyncSession) -> None:
     """Update all currency data in DB"""
     symbols: dict = await get_currency_names(client)
     await update_db_currency_names(db_session, symbols)
 
     rates: GetRates = await get_currency_rates(client)
+    # await update_currency_dates(db_session, rates)
     await update_db_currency_rates(db_session, rates)
 
 
@@ -46,7 +47,7 @@ async def get_currency_rates(client: AsyncClient) -> GetRates:
         return rates
 
     else:
-        logger.error(f"Ответ API != 200: {resp.status_code | resp.json()}")
+        logger.error(f"Ответ API != 200: {resp.status_code} | {resp.json()}")
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="Не удалось получить ответ от внешнего сервиса")
 
 
