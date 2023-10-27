@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Base project settings"""
     db_host: str
     db_port: int
     db_name: str

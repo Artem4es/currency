@@ -11,7 +11,9 @@ from config import Settings
 settings = Settings()
 
 
-DATABASE_URL = f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}"
+DATABASE_URL = (
+    f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}"
+)
 Base = declarative_base()
 
 metadata = MetaData()

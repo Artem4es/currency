@@ -1,14 +1,12 @@
 from http import HTTPStatus
-
-from fastapi import HTTPException
 from typing import Optional
 
+from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.currency_app.model import CurrencyDB, UpdateTimeDB
-from src.currency_app.schema import GetRates, TimeDateResponse
+from src.currency_app.models import CurrencyDB, UpdateTimeDB
+from src.currency_app.schemas import GetRates, TimeDateResponse
 
 
 async def update_db_currency_names(db_session: AsyncSession, symbols: dict) -> None:
@@ -61,7 +59,11 @@ async def get_db_currency_rates(db_session: AsyncSession, from_curr: str, to_cur
     to_curr_rate = db_res_to_curr.scalar()
     from_curr_rate = db_res_from_curr.scalar()
     if from_curr_rate and to_curr_rate:
-        rates = dict(from_curr_rate=from_curr_rate.rate, to_curr_rate=to_curr_rate.rate, last_updated=from_curr_rate.updatetime.updated_timestamp)
+        rates = dict(
+            from_curr_rate=from_curr_rate.rate,
+            to_curr_rate=to_curr_rate.rate,
+            last_updated=from_curr_rate.updatetime.updated_timestamp,
+        )
         return rates
 
     raise HTTPException(status_code=HTTPStatus.TOO_EARLY, detail={"detail": "No data in DB, please update rates"})

@@ -1,6 +1,7 @@
-from enum import Enum
 import re
-from pydantic import BaseModel, conint, constr, condate, validator, RootModel
+from enum import Enum
+
+from pydantic import BaseModel, RootModel, condate, conint, constr, validator
 
 
 class CurrencyCode(str):
@@ -40,18 +41,21 @@ class GetCodes(BaseModel):
     - success: bool (Response status from ext. API)
     - codes: dict (Currency codes with full names: {"USD": "United Stated Dollar"})
     """
+
     success: bool
     codes: dict[CurrencyCode, str]
 
 
 class UpdateRespStatus(str, Enum):
     """Status for rates update response"""
+
     SUCCESS = "Rates updated successfully"
     FAILED = "Couldn't update rates"
 
 
 class UpdateRatesResponse(BaseModel):
     """Response data for /update_rates" endpoint"""
+
     status: UpdateRespStatus
     update_time: int
 
@@ -63,6 +67,7 @@ class TimeDateResponse(BaseModel):
     - date: condate (Date in '2030-12-25' format)
     - timestamp: int (UNIX timestamp)
     """
+
     date: condate()
     timestamp: int
 
@@ -77,6 +82,7 @@ class ConvertResponse(BaseModel):
     - result: float  (calculated amount of 'to_currency')
     - last_updated: conint  (currency last updated in ext. API unix timestamp)
     """
+
     from_currency: str
     to_currency: str
     amount: float
@@ -90,5 +96,5 @@ class CurrencyCodes:
 
     Attribute example: USD = "United States Dollar"
     """
-    pass
 
+    pass
