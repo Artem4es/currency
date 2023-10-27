@@ -1,71 +1,94 @@
 from enum import Enum
-from typing import Optional
+import re
+from pydantic import BaseModel, conint, constr, condate, validator, RootModel
 
-from pydantic import BaseModel, conint, constr, condate
 
+class CurrencyCode(str):
+    @classmethod
+    def __get_validators__(cls, *args, **kwargs):
+        yield cls.validate
 
-# class Rates(BaseModel):
-#     """Currency code and its rate"""
-#     rates: dict[constr(pattern=r"^[A-Z]{3}$"), float]
+    @classmethod
+    def validate(cls, value, *args, **kwargs):
+        if not re.match(r"^[A-Z]{3}$", value):
+            raise ValueError("Invalid currency code. It should consist of 3 uppercase letters. example: USD")
+        return value
 
 
 class GetRates(BaseModel):
-    """Response with rates from external API"""
+    """
+    Get rates from external API
+
+    - success: bool (Response status from ext. API)
+    - timestamp: int (UNIX timestamp when rates were updated last time on ext. API)
+    - base: CurrencyCode (Basic currency set in API Euro by default "EUR")
+    - date condate (Date in '2030-12-25' format)
+    - rates: dict (Currency rates example: {"USD": 1.2, "RUB": 150})
+    """
+
     success: bool
     timestamp: conint(ge=0)
-    base: constr(pattern=r"^[A-Z]{3}$")
-    # date: constr(pattern=r'\d{4}-\d{2}-\d{2}')  # можно улучшить валидацию
-    date: condate()  # можно улучшить валидацию
-    rates: dict[constr(pattern=r"^[A-Z]{3}$"), float]
-    # class Config:
-    #     from_attributes=True
-
-
-# class Symbols(BaseModel):
-#     """Currency code and name"""
-#     symbols: dict[constr(pattern=r"^[A-Z]{3}$"), str]
+    base: CurrencyCode
+    date: condate()
+    rates: dict[CurrencyCode, float]
 
 
 class GetCodes(BaseModel):
-    """Get currency response names and codes"""
+    """
+    Get currency names and codes from ext. API
+
+    - success: bool (Response status from ext. API)
+    - codes: dict (Currency codes with full names: {"USD": "United Stated Dollar"})
+    """
     success: bool
-    symbols: dict[constr(pattern=r"^[A-Z]{3}$"), str]
+    codes: dict[CurrencyCode, str]
 
-
-class CurrencyUpdate(BaseModel):
-    """Used for currency update in DB"""
-    name: str
-    code: str
-    rate: Optional[float]
-    # @validator("price")
-    # @classmethod
-    # def validate_price(cls, value):
-    #     if value < 0:
-    #         raise ValueError("Price must be non-negative")
-    #     return value
 
 class UpdateRespStatus(str, Enum):
-    """Status for rates update"""
+    """Status for rates update response"""
     SUCCESS = "Rates updated successfully"
     FAILED = "Couldn't update rates"
 
 
 class UpdateRatesResponse(BaseModel):
-    """Used for /update_rates" endpoint response"""
+    """Response data for /update_rates" endpoint"""
     status: UpdateRespStatus
     update_time: int
 
 
 class TimeDateResponse(BaseModel):
-    """Return date and unix timestamp for last currency update"""
+    """Response data for '/last_update' endpoint.
+
+    Both parameters mean last update in external API
+    - date: condate (Date in '2030-12-25' format)
+    - timestamp: int (UNIX timestamp)
+    """
     date: condate()
     timestamp: int
 
 
 class ConvertResponse(BaseModel):
-    """Response model for convert currency endpoint"""
+    """
+    Response model for '/convert' currency endpoint
+
+    - from_currency: str (from what currency. Example "USD")
+    - to_currency: str  (to what currency. Example "EUR")
+    - amount: float  (amount to be converted)
+    - result: float  (calculated amount of 'to_currency')
+    - last_updated: conint  (currency last updated in ext. API unix timestamp)
+    """
     from_currency: str
     to_currency: str
-    amount_from: float
+    amount: float
     result: float
-    last_updated: int
+    last_updated: conint(ge=0)
+
+
+class CurrencyCodes:
+    """
+    All codes and description from DB. Fills in with data when app starts. Works as cache for DB codes
+
+    Attribute example: USD = "United States Dollar"
+    """
+    pass
+

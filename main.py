@@ -1,32 +1,17 @@
 import logging
-from contextlib import asynccontextmanager
 from logging.handlers import RotatingFileHandler
 
 import uvicorn
-from fastapi import FastAPI, Depends
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import FastAPI
 
 from config import Settings
-from database import get_async_session
-from src.currency_app.dependencies import get_async_client
+
 from src.currency_app.router import router as currency_router
-from src.currency_app.service import update_currency
+
+from src.currency_app.utils import lifespan
 
 settings = Settings()
 logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):   # можно ли тут depends?
-    """Update currency data in DB"""
-
-    async for client in get_async_client():
-        async for db_session in get_async_session():
-            await update_currency(client, db_session)
-    # db_session = get_async_session()
-
-    yield
 
 
 app = FastAPI(name=settings.fastapi_name, debug=settings.fastapi_debug, lifespan=lifespan)
