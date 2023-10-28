@@ -2,19 +2,16 @@ import logging
 from http import HTTPStatus
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_async_session
-from src.currency_app.crud import get_time_update, update_db_currency_rates
+from src.currency_app.crud import get_db_time_update, update_db_currency_rates
 from src.currency_app.dependencies import get_async_client
+from src.currency_app.managers import update_manager
 from src.currency_app.models import UpdateTimeDB
-from src.currency_app.responses import (
-    bad_ext_api_resp,
-    convert_bad_responses,
-    no_db_data,
-)
+from src.currency_app.responses import convert_resp, last_update_resp, update_rates_resp
 from src.currency_app.schemas import (
     ConvertResponse,
     GetRates,
@@ -33,11 +30,17 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.get("/update_rates", responses=bad_ext_api_resp)
+@router.get("/update_rates", responses=update_rates_resp)
 async def update_rates(
     db_session: AsyncSession = Depends(get_async_session), client: AsyncClient = Depends(get_async_client)
 ) -> UpdateRatesResponse:
     """Update rates info for all currencies"""
+    if not update_manager.has_expired():
+        expires_in: int = update_manager.expires_in()
+        raise HTTPException(
+            status_code=HTTPStatus.TOO_EARLY, detail=f"Rates are still fresh. Update in {expires_in} seconds, please!"
+        )
+
     rates_resp: GetRates = await get_currency_rates(client)
     update_time_data: UpdateTimeDB = await update_db_currency_rates(db_session, rates_resp)
 
@@ -47,25 +50,17 @@ async def update_rates(
     )
 
 
-@router.get("/last_update", responses=no_db_data)
+@router.get("/last_update", responses=last_update_resp)
 async def last_update(db_session: AsyncSession = Depends(get_async_session)) -> TimeDateResponse:
-    """Get last update time for currency rates"""
-    timedate: Optional[TimeDateResponse] = await get_time_update(db_session)
+    """Get last update time for currency rates from DB"""
+    timedate: Optional[TimeDateResponse] = await get_db_time_update(db_session)
     if timedate:
         return timedate
 
     raise HTTPException(status_code=HTTPStatus.TOO_EARLY, detail={"detail": "No data in DB, please update rates"})
 
 
-# @router.get("/convert")   # так можно но нет доки...
-# async def convert(from_curr: CurrencyCode, to_curr: CurrencyCode, from_curr_amount: float = Query(description="Any positive number. Dot should be used as separator: 1.556)", gt=0), db_session: AsyncSession = Depends(get_async_session)) -> ConvertResponse:
-#     """Calculates amount of second currency based on currency rate"""
-#     curr_rates: dict = await calculate_amount(db_session, from_curr, to_curr, from_curr_amount)
-#     response = ConvertResponse(from_currency=from_curr, to_currency=to_curr, amount=from_curr_amount, result=curr_rates["result"], last_updated=curr_rates["last_updated"])
-#     return response
-
-
-@router.get("/convert", responses=convert_bad_responses)
+@router.get("/convert", responses=convert_resp)
 async def convert(
     from_curr_amount: float = Depends(validate_curr_amount),
     from_curr: str = Depends(validate_from_curr),

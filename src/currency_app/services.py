@@ -11,6 +11,7 @@ from src.currency_app.crud import (
     update_db_currency_names,
     update_db_currency_rates,
 )
+from src.currency_app.managers import update_manager
 from src.currency_app.schemas import ConvertResponse, CurrencyCodes, GetCodes, GetRates
 
 logger = logging.getLogger(__name__)
@@ -23,25 +24,19 @@ def fill_currency_codes_class(codes: dict) -> None:
     for code, description in codes.items():
         setattr(CurrencyCodes, code, description)
 
-############################
-async def get_currency_data(client: AsyncClient) -> dict:
-    """Get currency names, codes and rats"""
-    symbols: GetCodes = await get_currency_names(client)
-    rates: GetRates = await get_currency_rates(client)
-    fill_currency_codes_class(symbols.codes)
-    return dict(symbols=symbols, rates=rates)
 
 async def update_currency(client: AsyncClient, db_session: AsyncSession) -> None:
     """Update all currency data in DB"""
     logger.info("Refresh DB data has started ...")
-    # symbols: GetCodes = await get_currency_names(client)
-    # await update_db_currency_names(db_session, symbols.codes)
-    #
-    # # fill_currency_codes_class(symbols.codes)
-    #
-    # # rates: GetRates = await get_currency_rates(client)
-    # await update_db_currency_rates(db_session, rates)
-    # logger.info("Refresh DB data has been successfully finished")
+    symbols: GetCodes = await get_currency_names(client)
+    await update_db_currency_names(db_session, symbols.codes)
+
+    fill_currency_codes_class(symbols.codes)
+
+    rates: GetRates = await get_currency_rates(client)
+    await update_db_currency_rates(db_session, rates)
+    update_manager.update_currency_data(rates)
+    logger.info("Refresh DB data has been successfully finished")
 
 
 async def get_currency_names(client: AsyncClient) -> GetCodes:
@@ -65,6 +60,7 @@ async def get_currency_rates(client: AsyncClient) -> GetRates:
     if resp.status_code == HTTPStatus.OK:
         res = resp.json()
         rates = GetRates(**res)
+        update_manager.update_currency_data(rates)
         return rates
 
     else:
@@ -72,9 +68,19 @@ async def get_currency_rates(client: AsyncClient) -> GetRates:
         raise HTTPException(status_code=HTTPStatus.CONFLICT, detail="Couldn't get response from external API")
 
 
+def get_cached_rates(from_curr: str, to_curr: str) -> dict:
+    """Get cached rates"""
+    from_curr_rate: float = update_manager.get_currency_rate(from_curr)
+    to_curr_rate: float = update_manager.get_currency_rate(to_curr)
+    last_updated: int = update_manager.last_updated()
+    return dict(from_curr_rate=from_curr_rate, to_curr_rate=to_curr_rate, last_updated=last_updated)
+
+
 async def calculate_amount(db_session: AsyncSession, from_curr: str, to_curr: str, from_curr_amount: float) -> ConvertResponse:
     """Calculate amount of 'to_curr' currency based on DB exchange rate"""
-    curr_rates: dict = await get_db_currency_rates(db_session, from_curr, to_curr)
+    curr_rates: dict = get_cached_rates(from_curr, to_curr)
+    if update_manager.has_expired():
+        curr_rates = await get_db_currency_rates(db_session, from_curr, to_curr)
 
     from_curr_rate = curr_rates["from_curr_rate"]
     to_curr_rate = curr_rates["to_curr_rate"]

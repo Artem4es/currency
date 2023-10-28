@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 
-from pydantic import BaseModel, RootModel, condate, conint, constr, validator
+from pydantic import BaseModel, condate, conint
 
 
 class CurrencyCode(str):

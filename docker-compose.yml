@@ -6,8 +6,6 @@ services:
     container_name: currency-postgres
     hostname: currency-postgres
     environment:
-#      POSTGRES_DB: postgres
-#      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
@@ -29,23 +27,6 @@ services:
       - currency-postgres
     networks:
       - home
-
-
-#  alf-bot-nginx:
-#    container_name: alf-bot-nginx
-#    hostname: alf-bot-nginx
-#    image: nginx
-#    ports:
-#      - "80:80"
-#    volumes:
-#      - ./default.conf:/etc/nginx/conf.d/default.conf
-#    depends_on:
-#      - alf-bot-fastapi
-#      - alf-bot-aiogram
-#    networks:
-#      - home
-
-
 
 networks:
   home: {}

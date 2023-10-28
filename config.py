@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Base project settings"""
+
     db_host: str
     db_port: int
     db_name: str
@@ -18,5 +19,6 @@ class Settings(BaseSettings):
     currency_api_version: str
     currency_names: str
     currency_rates: str
+    expiration_period: int
 
     model_config = SettingsConfigDict(env_file=".env")

@@ -38,7 +38,7 @@ async def update_currency_dates(db_session: AsyncSession, rates_resp: GetRates) 
     return update_time
 
 
-async def get_time_update(db_session: AsyncSession) -> Optional[TimeDateResponse]:
+async def get_db_time_update(db_session: AsyncSession) -> Optional[TimeDateResponse]:
     """Get date and unix timestamp for last currency update"""
     stmt = select(UpdateTimeDB).order_by(UpdateTimeDB.updated_timestamp.desc())
     res = await db_session.execute(stmt)
@@ -48,7 +48,7 @@ async def get_time_update(db_session: AsyncSession) -> Optional[TimeDateResponse
         return TimeDateResponse(date=resp.updated_date, timestamp=resp.updated_timestamp)
 
 
-async def get_db_currency_rates(db_session: AsyncSession, from_curr: str, to_curr: str = None) -> dict:
+async def get_db_currency_rates(db_session: AsyncSession, from_curr: str, to_curr: str) -> dict:
     """Get currency rate for one or two currencies"""
     from_curr_stmt = select(CurrencyDB).where(CurrencyDB.code == from_curr)
     to_curr_stmt = select(CurrencyDB).where(CurrencyDB.code == to_curr)

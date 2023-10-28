@@ -17,7 +17,7 @@ app.include_router(currency_router, tags=["Currency_API"])
 
 
 def setup_logging() -> None:
-    handler = RotatingFileHandler("src/currency_app/logs/app.log", maxBytes=5000000, backupCount=5)
+    handler = RotatingFileHandler("./src/currency_app/logs/app.log", maxBytes=5000000, backupCount=5)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
