@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+
+  currency-postgres:
+    container_name: currency-postgres
+    hostname: currency-postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    image: postgres:15
+    networks:
+      - home
+
+  currency-app:
+    container_name: currency-app
+    hostname: currency-app
+    build:
+      context: .
+      dockerfile: ./src/currency_app/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/currency_app/logs/:/currency/src/currency_app/logs/
+    depends_on:
+      - currency-postgres
+    networks:
+      - home
+
+networks:
+  home: {}

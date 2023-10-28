@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "currency"
+version = "0.1.0"
+description = ""
+authors = ["Artem <dragster1001@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10.12"
+fastapi = "^0.104.0"
+alembic = "^1.12.0"
+sqlalchemy = "^2.0.22"
+pydantic-settings = "^2.0.3"
+httpx = "^0.25.0"
+uvicorn = "^0.23.2"
+asyncpg = "^0.28.0"
+black = "^23.10.1"
+isort = "^5.12.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 130
+target-version = ['py310']
+extend-exclude = '''
+.*/migrations/*.
+'''
+
+[tool.isort]
+profile = "black"
+skip_glob = "**/migrations/**"
