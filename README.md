@@ -16,7 +16,7 @@ git clone git@github.com:Artem4es/currency.git
 
 Перейти в папку с проектом
 ```
-cd /currency
+cd currency
 ```
 
 
